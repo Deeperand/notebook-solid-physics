@@ -1,0 +1,9 @@
+# LaTeX compile
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*_vimtex.*
+
+# macOS
+.DS_store
