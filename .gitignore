@@ -4,6 +4,9 @@
 *.fls
 *.log
 *_vimtex.*
+*.toc
+*.gz
+*.out
 
 # macOS
 .DS_store
