@@ -13,6 +13,7 @@
     \DeclareMathSizes{10.54}{10.54}{5.27}{3.16}
 
 
+
 % other packages
 %    \usepackage{pdfsync}
     \usepackage{import}
@@ -22,10 +23,14 @@
 
     % package in drawing
     \usepackage{tikz}
+    \usetikzlibrary{scopes} % let use of scopes environment easier
     \usetikzlibrary{optics} % use library: optics (made the draw of optic much easier)
     \usetikzlibrary{arrows.meta} % more type of arrow
     \usetikzlibrary{intersections} % calcuate intersection
     \usetikzlibrary{calc}
+    \usetikzlibrary{trees} % tree graph
+    \usetikzlibrary{chains} % chain plot
+    \usetikzlibrary{matrix}
 
     % package using in text mode
     \usepackage[a4paper, left=2.54cm, right=2.54cm, top=2.54cm, bottom=2.54cm]{geometry}
@@ -37,11 +42,14 @@
     \usepackage{booktabs}
     \usepackage{caption} % control the caption format of picture
     \usepackage{longtable} % auto-change-page-table
-    % \usepackage{hyperref} % provide command: \autoref
     \usepackage{nameref} % provide command: \nameref
     \usepackage{fontspec} % font select and set
     \usepackage{CJKfntef} % enhanced under modify, the parameter can cancel replacing '\emph' with '\CJKunderline'
-    \usepackage{ulem}[normalem]
+    \usepackage[normalem]{ulem} % 除可以用于下划线修饰以外, 还提供了指令 \bgroup 与 \markoverwith \Ulon, 可用于自定义文字上的风格.
+    \usepackage{cprotect} % make the use of `verb` more convenient
+    \usepackage{multirow} % allow generate cross-row table (command "\multirow")
+    \usepackage{changepage} % indent the entire paragraph
+    \usepackage{theorem} % control theorem enviroment
 
     % package using in math mode
     \usepackage{amsmath}
@@ -61,22 +69,71 @@
 
 % self define
     \definecolor{CodeGrey}{RGB}{240, 240, 240} % the grey used in code block or single code
+    \definecolor{InLineCodeColor}{RGB}{94, 160, 40} % the grey used in code block or single code
 
 % command/environment building and renewing
     % text
         % env
-            % Solve: used to "proof", "solve" and so on
-            \newenvironment{Solve}
-            [1][解:]%
-            {\paragraph*{#1\\}}%
-            {\begin{flushright}$\square$\end{flushright}}
+            % Indent
+                \newenvironment{Indent}
+                {\begin{adjustwidth}{1em}{0em}}%
+                {\end{adjustwidth}}
+
+            % Notation
+                \newcounter{Notation}[chapter]
+                \newcommand\ChapterNum{\arabic{chapter}}
+                \newcommand\NotationNum{\arabic{Notation}}
+
+                \newenvironment{Notation}
+                {\stepcounter{Notation}%
+                \begin{Indent} \textbf{Notation \ChapterNum.\NotationNum\ :}%
+                    \begin{enumerate}}%
+                    {\end{enumerate}%
+                \end{Indent}}
+
+            % Solve: used to "proof", "solve" and so on. The command \Box is better than $\square$
+                \newcommand\QedSymbol{\ensuremath{\Box}}
+
+                \newenvironment{Solve}
+                [1][解:]%
+                {\upshape\textbf{#1 \\}}%
+                {\begin{flushright}\QedSymbol\end{flushright}}
+
+            % Example (If use "\slshape" or "\itshape", the Chiniese will use "\kaishu". However, use "\itshape" will let it hard to distinct main body and math equaion if language is English. So use "\slshape" is better.
+                \newcommand\ExampleSymbol{\ensuremath{\blacksquare}}
+
+                \newcounter{Example}[chapter]
+                \newcommand\ExampleNum{\arabic{Example}}
+
+                \newenvironment{Example}
+                [1][]%
+                {\stepcounter{Example}%
+                    \begin{Indent}%
+                        \textbf{Example \ChapterNum.\ExampleNum\ #1}%
+                            \begin{Indent}%
+                            \slshape}%
+                            {\end{Indent}%
+                            \begin{flushright}\ExampleSymbol\end{flushright}%
+                    \end{Indent}}%
+
+
 
         % command
-            \newcommand{\Code}[1]{\colorbox{CodeGrey}{\rule{0pt}{1ex}\texttt{#1}}} % code, had the less height "ex", which means even the punctuation like comma had the height "ex".
+            \newcommand{\Code}[1]{\lstinline[basicstyle=\color{InLineCodeColor}\ttfamily]{#1}} % in-line code
+            \newcommand{\CodeA}[1]{\textcolor{InLineCodeColor}{\texttt{#1}}} % in-line code, box version, can be used at table
+            \newcommand{\CodeB}[1]{\colorbox{CodeGrey}{\rule{0pt}{1ex}\texttt{#1}}} % code with box, had the less height "ex", which means even the punctuation like comma had the height "ex".
             \newcommand{\completesolving}{\begin{flushright}$\square$\end{flushright}} % the square
             \newcommand{\CompleteExample}{\begin{flushright}$\blacksquare$\end{flushright}} % the black square
             \newcommand\DoubleQuote[1]{``#1''} % double quote
             \newcommand\SingleQuote[1]{`#1'} % single quote
+
+        % parenthesis (为了避免因只输入单侧括号而造成文本编辑器错误的语法高亮, 不过这种情况较为少见)
+            \newcommand\BraPL{(} % bracket: left parenthesis
+            \newcommand\BraPR{)} % bracket: right parenthesis
+            \newcommand\BraSL{[} % bracket: left square parenthesis
+            \newcommand\BraSR{]} % bracket: right square parenthesis
+            \newcommand\BraBL{\{} % bracket: left brace
+            \newcommand\BraBR{\}} % bracket: right brace
 
         % font
             \newfontfamily\Zapfino{Zapfino}
@@ -97,18 +154,72 @@
     \renewcommand\theenumiv{\Roman{enumiv}}
 
     % theorem environment
-    \makeatletter
-    \@ifclassloaded{ctexbook}{%
-        \newtheorem{Claim}{Claim}[chapter]%
-        \newtheorem{Concept}{Concept}[chapter]%
-        \newtheorem{Definition}{Definition}[chapter]%
-        \newtheorem{Example}{Example}[chapter]%
-        \newtheorem{Formula}{Formula}[chapter]%
-        \newtheorem{Law}{Law}[chapter]%
-        \newtheorem{Property}{Property}[chapter]%
-        \newtheorem{Theorem}{Theorem}[chapter]%
-    }{}
-    \makeatother
+        % length before and after theorem environment
+        \setlength{\theorempreskipamount}{3em}
+        \setlength{\theorempostskipamount}{3em}
+
+        % command define
+            \makeatletter
+            \@ifclassloaded{ctexbook}{%
+                \newtheorem{ClaimOriginal}{Claim}[chapter]%
+                \newtheorem{ConceptOriginal}{Concept}[chapter]%
+                \newtheorem{DefinitionOriginal}{Definition}[chapter]%
+                \newtheorem{FormulaOriginal}{Formula}[chapter]%
+                \newtheorem{LawOriginal}{Law}[chapter]%
+                \newtheorem{PropertyOriginal}{Property}[chapter]%
+                \newtheorem{TheoremOriginal}{Theorem}[chapter]%
+
+                % indent theorem enviroment
+                \newenvironment{Claim}%
+                [1][]%
+                {\vspace{0.6em}\begin{Indent}%
+                    \begin{ClaimOriginal}[#1]}%
+                    {\end{ClaimOriginal}%
+                \end{Indent}\vspace{0.6em}}
+
+                \newenvironment{Concept}%
+                [1][]%
+                {\vspace{0.6em}\begin{Indent}%
+                    \begin{ConceptOriginal}[#1]}%
+                    {\end{ConceptOriginal}%
+                \end{Indent}\vspace{0.6em}}
+
+                \newenvironment{Definition}%
+                [1][]%
+                {\vspace{0.6em}\begin{Indent}%
+                    \begin{DefinitionOriginal}[#1]}%
+                    {\end{DefinitionOriginal}%
+                \end{Indent}\vspace{0.6em}}
+
+                \newenvironment{Formula}%
+                [1][]%
+                {\vspace{0.6em}\begin{Indent}%
+                    \begin{FormulaOriginal}[#1]}%
+                    {\end{FormulaOriginal}%
+                \end{Indent}\vspace{0.6em}}
+
+                \newenvironment{Law}%
+                [1][]%
+                {\vspace{0.6em}\begin{Indent}%
+                    \begin{LawOriginal}[#1]}%
+                    {\end{LawOriginal}%
+                \end{Indent}\vspace{0.6em}}
+
+                \newenvironment{Property}%
+                [1][]%
+                {\vspace{0.6em}\begin{Indent}%
+                    \begin{PropertyOriginal}[#1]}%
+                    {\end{PropertyOriginal}%
+                \end{Indent}\vspace{0.6em}}
+
+                \newenvironment{Theorem}%
+                [1][]%
+                {\vspace{0.6em}\begin{Indent}%
+                    \begin{TheoremOriginal}[#1]}%
+                    {\end{TheoremOriginal}%
+                \end{Indent}\vspace{0.6em}}
+            }{}
+            \makeatother
 
 % initialize the setting
     % avoid too large interval between picture's caption and picture
